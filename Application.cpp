@@ -1,5 +1,6 @@
 #include "Application.h"
 #include "Enums.h"
+#include <bobcat_ui/bobcat_ui.h>
 
 using namespace bobcat;
 using namespace std;
@@ -8,44 +9,44 @@ void Application::onCanvasMouseDown(bobcat::Widget* sender, float mx, float my) 
     TOOL tool = toolbar->getTool();
     Color color = colorSelector->getColor();
 
-    if (tool == PENCIL) {
+   if (tool == PENCIL) {
+        currentScribblePoints.clear();
+        currentScribblePoints.push_back(Point(mx, my, color.getR(), color.getG(), color.getB(), 7));
         canvas->addPoint(mx, my, color.getR(), color.getG(), color.getB(), 7);
         canvas->redraw();
-    }
-    else if (tool == ERASER) {
+    }else if (tool == ERASER) {
         canvas->addPoint(mx, my, 1.0, 1.0, 1.0, 14);
         canvas->eraseAt(mx, my);
         canvas->redraw();
-    }
-    else if (tool == RECTANGLE) {
+    }else if (tool == RECTANGLE) {
         canvas->addRectangle(mx, my, color.getR(), color.getG(), color.getB());
         canvas->redraw();
-    }
-    else if (tool == CIRCLE) { 
+    }else if (tool == CIRCLE) { 
         canvas->addCircle(mx, my, color.getR(), color.getG(), color.getB());
         canvas->redraw();
-    }
-    else if (tool == TRIANGLE) {
+    }else if (tool == TRIANGLE) {
         canvas->addTriangle(mx, my, 0.2, 0.2, color.getR(), color.getG(), color.getB());
         canvas->redraw();
-    }
-    else if (tool == POLYGON) {
+    }else if (tool == POLYGON) {
         canvas->addPolygon(mx, my, 6, 0.1, color.getR(), color.getG(), color.getB());
         canvas->redraw();
     }else if (tool == MOUSE) {
         selectedShape = canvas->getSelectedShape(mx, my);
     }
+   
+    
 }
 
 void Application::onCanvasDrag(bobcat::Widget* sender, float mx, float my) {
     TOOL tool = toolbar->getTool();
     Color color = colorSelector->getColor();
 
-    if (tool == PENCIL) {
+     if (tool == PENCIL) {
+        currentScribblePoints.push_back(Point(mx, my, color.getR(), color.getG(), color.getB(), 7));
         canvas->addPoint(mx, my, color.getR(), color.getG(), color.getB(), 7);
         canvas->redraw();
-    }
-    else if (tool == ERASER) {
+
+    }else if (tool == ERASER) {
         canvas->addPoint(mx, my, 1.0, 1.0, 1.0, 14);
         canvas->eraseAt(mx,my);
         canvas->redraw();
@@ -70,6 +71,16 @@ void Application::onColorSelectorChange(bobcat::Widget* sender) {
         canvas->redraw();
     }
 }
+void Application::onCanvasMouseUp(bobcat::Widget* sender, float mx, float my) {
+    TOOL tool = toolbar->getTool();
+    Color color = colorSelector->getColor();
+
+    if (tool == PENCIL && !currentScribblePoints.empty()) {
+        canvas->addScribble(currentScribblePoints, color.getR(), color.getG(), color.getB());
+        canvas->redraw();
+        currentScribblePoints.clear();
+    }
+}
 
 Application::Application() {
     window = new Window(25, 75, 400, 400, "BobCat UI");
@@ -89,6 +100,7 @@ Application::Application() {
     ON_DRAG(canvas, Application::onCanvasDrag);
     ON_CHANGE(toolbar, Application::onToolbarChange);
     ON_CHANGE(colorSelector, Application::onColorSelectorChange);
+    ON_MOUSE_UP(canvas, Application::onCanvasMouseUp);
 
     window->show();
 }
